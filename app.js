@@ -1,5 +1,5 @@
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycby_0PW2YHNgA6DBtv2qwF2tM6I_3mK0vPdsT_3-WVTKoKD9K-UxqrbuR5lt_tG8WBYA/exec";
+  "https://script.google.com/macros/s/AKfycbw2DgDX-_ixpPSXv12TgrPpL6xs1Tkv47tmJPR6ga9UJor46FN9LFpCv2uYJ0j-1N4G/exec";
 
 const STAFF_TOGGLE_NAMES = [
   "余承翰",
@@ -83,10 +83,20 @@ function bindEvents() {
 
   attendanceToggles.forEach((button) => {
     button.addEventListener("click", () => {
-      const nextValue = button.dataset.value === "1" ? "0" : "1";
-      button.dataset.value = nextValue;
+      button.dataset.value = button.dataset.value === "1" ? "0" : "1";
       updateAttendanceButton(button);
     });
+  });
+
+  historyList.addEventListener("click", async (event) => {
+    const deleteButton = event.target.closest("[data-delete-id]");
+    if (!deleteButton) return;
+
+    const recordId = deleteButton.dataset.deleteId;
+    const ok = window.confirm("確定要刪除這筆資料嗎？");
+    if (!ok) return;
+
+    await deleteRecord(recordId);
   });
 }
 
@@ -127,7 +137,7 @@ function formatDateTime(value) {
 function formatDateOnly(value) {
   if (!value) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
@@ -204,16 +214,12 @@ async function submitRecord(event) {
   try {
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      },
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
     });
 
     const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.message || "送出失敗");
-    }
+    if (!result.success) throw new Error(result.message || "送出失敗");
 
     resetForm();
     setStatus("登記成功");
@@ -254,11 +260,11 @@ async function fetchHistory() {
   summaryTableWrap.innerHTML = "";
 
   try {
-    const response = await fetch(`${APPS_SCRIPT_URL}?action=list`);
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=list&ts=${Date.now()}`,
+    );
     const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.message || "讀取失敗");
-    }
+    if (!result.success) throw new Error(result.message || "讀取失敗");
 
     allRecords = Array.isArray(result.data) ? result.data : [];
     applyFilters();
@@ -267,6 +273,25 @@ async function fetchHistory() {
     const message = escapeHtml(error.message || "發生錯誤");
     historyList.innerHTML = `<div class="empty-state">${message}</div>`;
     summaryTableWrap.innerHTML = `<div class="empty-state">${message}</div>`;
+  }
+}
+
+async function deleteRecord(recordId) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("請貼上")) return;
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "delete", recordId }),
+    });
+
+    const result = await response.json();
+    if (!result.success) throw new Error(result.message || "刪除失敗");
+
+    await fetchHistory();
+  } catch (error) {
+    window.alert(error.message || "刪除失敗");
   }
 }
 
@@ -348,6 +373,9 @@ function renderHistory(records) {
         <div class="history-title">${escapeHtml(record.projectName || "未填工程名稱")}｜${escapeHtml(record.site || "未填地點")}</div>
         <div class="history-meta">出工日期：${escapeHtml(formatDateOnly(record.workDate || record.createdAt || ""))}　登記時間：${escapeHtml(formatDateTime(record.createdAt || ""))}</div>
         <div class="badge-list">${badges || '<span class="badge">無資料</span>'}</div>
+        <div class="history-actions">
+          <button type="button" class="button button--danger" data-delete-id="${escapeHtml(record.recordId || "")}">刪除</button>
+        </div>
       </article>
     `;
     })
@@ -392,7 +420,6 @@ function renderSummary(records) {
         const className = value === 0 ? "zero-cell" : "";
         return `<td class="${className}">${value}</td>`;
       }).join("");
-
       return `<tr><td>${date}</td>${cells}</tr>`;
     })
     .join("");
@@ -401,12 +428,7 @@ function renderSummary(records) {
     <div class="muted-text">統計日期數：${dates.length} 天</div>
     <div class="table-wrap">
       <table class="report-table">
-        <thead>
-          <tr>
-            <th>日期</th>
-            ${headHtml}
-          </tr>
-        </thead>
+        <thead><tr><th>日期</th>${headHtml}</tr></thead>
         <tbody>${bodyHtml}</tbody>
       </table>
     </div>
@@ -434,7 +456,6 @@ function exportCsv() {
       row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
     )
     .join("\n");
-
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

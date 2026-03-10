@@ -300,6 +300,21 @@ input {
   background: var(--zero-bg);
 }
 
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.button--danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.button--danger:hover {
+  background: #fecaca;
+}
+
 @media (max-width: 980px) {
   .page-header,
   .form-grid--two,
