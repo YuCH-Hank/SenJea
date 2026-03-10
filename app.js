@@ -410,9 +410,9 @@ function renderSummary(records) {
     return;
   }
 
-  const headHtml = PEOPLE_NAMES.map(
-    (name) => `<th>${escapeHtml(name)}</th>`,
-  ).join("");
+  const headHtml =
+    `<th>總計</th>` +
+    PEOPLE_NAMES.map((name) => `<th>${escapeHtml(name)}</th>`).join("");
   const bodyHtml = dates
     .map((date) => {
       const cells = PEOPLE_NAMES.map((name) => {
@@ -420,7 +420,12 @@ function renderSummary(records) {
         const className = value === 0 ? "zero-cell" : "";
         return `<td class="${className}">${value}</td>`;
       }).join("");
-      return `<tr><td>${date}</td>${cells}</tr>`;
+      const total = PEOPLE_NAMES.reduce(
+        (sum, name) => sum + (grouped[date][name] || 0),
+        0,
+      );
+      const totalClass = total === 0 ? "zero-cell" : "";
+      return `<tr><td>${date}</td><td class="${totalClass}">${total}</td>${cells}</tr>`;
     })
     .join("");
 
