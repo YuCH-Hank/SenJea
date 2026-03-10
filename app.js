@@ -1,5 +1,5 @@
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbw2DgDX-_ixpPSXv12TgrPpL6xs1Tkv47tmJPR6ga9UJor46FN9LFpCv2uYJ0j-1N4G/exec";
+  "https://script.google.com/macros/s/AKfycbwtEGF6RTPePO1i4J7Vh8Ju4WOWPU6XJj8T8mSs7AdgwJOzGXdpp2BpnhSXC4m6w6LX/exec";
 
 const STAFF_TOGGLE_NAMES = [
   "余承翰",
