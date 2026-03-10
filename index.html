@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>出工登記系統</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+        background: #f3f6fb;
+        color: #1f2937;
+      }
+      .container {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 24px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        padding: 24px;
+      }
+      h1,
+      h2 {
+        margin: 0 0 8px;
+      }
+      .subtext {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+      .field {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        outline: none;
+        background: #fff;
+      }
+      input:focus,
+      textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      .btn {
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 18px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: 0.2s ease;
+      }
+      .btn-primary {
+        width: 100%;
+        background: #2563eb;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #1d4ed8;
+      }
+      .btn-secondary {
+        background: #eef2ff;
+        color: #1e3a8a;
+      }
+      .btn-secondary:hover {
+        background: #e0e7ff;
+      }
+      .btn-danger {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .btn-danger:hover {
+        background: #fecaca;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .history-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 14px;
+        background: #fff;
+      }
+      .history-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+      .site-name {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+      .time-text {
+        color: #6b7280;
+        font-size: 13px;
+      }
+      .badge-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .badge {
+        background: #f3f4f6;
+        color: #111827;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .status {
+        margin-top: 12px;
+        font-size: 14px;
+        color: #2563eb;
+        min-height: 20px;
+      }
+      .empty {
+        text-align: center;
+        color: #6b7280;
+        padding: 32px 16px;
+        border: 1px dashed #d1d5db;
+        border-radius: 16px;
+        background: #fafafa;
+      }
+      .loading {
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .config-note {
+        margin-top: 16px;
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.7;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      @media (max-width: 900px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="display: block; max-width: 1180px">
+      <div class="card" style="margin-bottom: 20px">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <button class="btn btn-secondary" type="button" id="tabFormBtn">
+            出工登記
+          </button>
+          <button class="btn btn-secondary" type="button" id="tabHistoryBtn">
+            歷史資料查詢
+          </button>
+        </div>
+      </div>
+
+      <section class="card" id="formTab">
+        <h1>出工登記系統</h1>
+        <div class="subtext">
+          登記資料會寫入 Google 試算表，並可即時查閱歷史紀錄。<br />
+          出勤人員可用換行、逗號或頓號分隔。
+        </div>
+
+        <form id="recordForm">
+          <div class="field">
+            <div class="field">
+              <label for="projectName">工程名稱</label>
+              <input
+                id="projectName"
+                name="projectName"
+                type="text"
+                placeholder="例如：山鶯線機電工程"
+                required
+              />
+            </div>
+
+            <label>出工地點</label>
+            <div
+              id="siteOptions"
+              style="
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+              "
+            >
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="山鶯 S1"
+                  style="width: auto"
+                />
+                山鶯 S1
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="山鶯 S2"
+                  style="width: auto"
+                />
+                山鶯 S2
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="山鶯 PCB"
+                  style="width: auto"
+                />
+                山鶯 PCB
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="山鶯 S2A"
+                  style="width: auto"
+                />
+                山鶯 S2A
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="光復 KF1"
+                  style="width: auto"
+                />
+                光復 KF1
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="光復 KF2"
+                  style="width: auto"
+                />
+                光復 KF2
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="大園"
+                  style="width: auto"
+                />
+                大園
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-weight: 500;
+                  border: 1px solid #d1d5db;
+                  border-radius: 12px;
+                  padding: 10px 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  name="site"
+                  value="楊梅 YM"
+                  style="width: auto"
+                />
+                楊梅 YM
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>出勤人員</label>
+            <div
+              id="peopleOptions"
+              style="
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+              "
+            >
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>余承翰</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="余承翰"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>向興聖</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="向興聖"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>呂龍雄</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="呂龍雄"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>陳慶星</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="陳慶星"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>郭靖瑋</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="郭靖瑋"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>郭俊廷</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="郭俊廷"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>鄒永福</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="鄒永福"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>徐子凡</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="徐子凡"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>石雅龍</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="石雅龍"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>吊掛</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="吊掛"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>洗孔</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="洗孔"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>防火填塞</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="防火填塞"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>弘憶</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="弘憶"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>詠業</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="詠業"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>聖勳</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="聖勳"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>帝律</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="帝律"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>頂成</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="頂成"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>兆又昌</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="兆又昌"
+                  min="0"
+                  value="0"
+                />
+              </label>
+              <label
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+                  padding: 10px;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 12px;
+                "
+              >
+                <span>其他</span
+                ><input
+                  type="number"
+                  name="peopleCount"
+                  data-name="其他"
+                  min="0"
+                  value="0"
+                />
+              </label>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" type="submit">送出登記</button>
+          <div id="status" class="status"></div>
+        </form>
+
+        <div class="config-note">
+          使用前請先把程式裡的 <b>APPS_SCRIPT_URL</b> 換成你部署好的 Google Apps
+          Script Web App 網址。
+        </div>
+      </section>
+
+      <section class="card" id="historyTab" style="display: none">
+        <h2>歷史資料</h2>
+        <div class="subtext">可搜尋地點、人員、登記時間。</div>
+
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="搜尋地點、人員或時間"
+        />
+
+        <div class="toolbar">
+          <input id="startDate" type="date" />
+          <input id="endDate" type="date" />
+          <button class="btn btn-secondary" type="button" id="reloadBtn">
+            重新整理
+          </button>
+          <button class="btn btn-secondary" type="button" id="exportBtn">
+            匯出 CSV
+          </button>
+        </div>
+
+        <div id="historyCount" class="loading">讀取中...</div>
+        <div id="historyList"></div>
+        <div style="margin-top: 24px">
+          <h2 style="margin-bottom: 8px">區間統計表</h2>
+          <div class="subtext">選擇起訖日期後，自動統計各人員／工項數量。</div>
+          <div id="summaryTableWrap"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const APPS_SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbx_IYQ8TIP-DYr6gPyBDJrtx9Xasn9K69uic2Zj_zhX8WPtMSSJDWED9PyUfWue5K0k/exec";
+
+      const form = document.getElementById("recordForm");
+      const projectNameInput = document.getElementById("projectName");
+      const tabFormBtn = document.getElementById("tabFormBtn");
+      const tabHistoryBtn = document.getElementById("tabHistoryBtn");
+      const formTab = document.getElementById("formTab");
+      const historyTab = document.getElementById("historyTab");
+      const siteInputs = Array.from(
+        document.querySelectorAll('input[name="site"]'),
+      );
+      const peopleInputs = Array.from(
+        document.querySelectorAll('input[name="peopleCount"]'),
+      );
+      const statusEl = document.getElementById("status");
+      const historyListEl = document.getElementById("historyList");
+      const historyCountEl = document.getElementById("historyCount");
+      const searchInput = document.getElementById("searchInput");
+      const reloadBtn = document.getElementById("reloadBtn");
+      const exportBtn = document.getElementById("exportBtn");
+
+      let allRecords = [];
+      const PEOPLE_NAMES = [
+        "余承翰",
+        "向興聖",
+        "呂龍雄",
+        "陳慶星",
+        "郭靖瑋",
+        "郭俊廷",
+        "鄒永福",
+        "徐子凡",
+        "石雅龍",
+        "吊掛",
+        "洗孔",
+        "防火填塞",
+        "弘憶",
+        "詠業",
+        "聖勳",
+        "帝律",
+        "頂成",
+        "兆又昌",
+        "其他",
+      ];
+      const startDateInput = document.getElementById("startDate");
+      const endDateInput = document.getElementById("endDate");
+      const summaryTableWrap = document.getElementById("summaryTableWrap");
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.style.color = isError ? "#b91c1c" : "#2563eb";
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString("zh-TW", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function splitPeople(text) {
+        return text
+          .split(/[\n,，、]/)
+          .map((v) => v.trim())
+          .filter(Boolean);
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function normalizePeople(record) {
+        if (record.peopleDetail && typeof record.peopleDetail === "object") {
+          return record.peopleDetail;
+        }
+        const result = {};
+        const people = Array.isArray(record.people)
+          ? record.people
+          : splitPeople(record.people || "");
+        people.forEach((name) => {
+          result[name] = (result[name] || 0) + 1;
+        });
+        return result;
+      }
+
+      function renderHistory(records) {
+        historyCountEl.textContent = `共 ${records.length} 筆資料`;
+
+        if (!records.length) {
+          historyListEl.innerHTML =
+            '<div class="empty">目前沒有符合條件的資料</div>';
+          renderSummary([]);
+          return;
+        }
+
+        historyListEl.innerHTML = records
+          .map((record) => {
+            const peopleMap = normalizePeople(record);
+            const badges = Object.entries(peopleMap)
+              .filter(([, count]) => Number(count) > 0)
+              .map(
+                ([name, count]) =>
+                  `<span class="badge">${escapeHtml(name)} × ${escapeHtml(count)}</span>`,
+              )
+              .join("");
+            return `
+          <div class="history-item">
+            <div class="history-top">
+              <div>
+                <div class="site-name">${escapeHtml(record.projectName || "未填工程名稱")}｜${escapeHtml(record.site || "")}</div>
+                <div class="time-text">登記時間：${escapeHtml(formatDateTime(record.createdAt || record.timestamp || ""))}</div>
+              </div>
+            </div>
+            <div class="badge-list">${badges}</div>
+          </div>
+        `;
+          })
+          .join("");
+
+        renderSummary(records);
+      }
+
+      function renderSummary(records) {
+        const start = startDateInput.value
+          ? new Date(startDateInput.value + "T00:00:00")
+          : null;
+        const end = endDateInput.value
+          ? new Date(endDateInput.value + "T23:59:59")
+          : null;
+        const filtered = records.filter((record) => {
+          const d = new Date(record.createdAt || record.timestamp || "");
+          if (Number.isNaN(d.getTime())) return false;
+          if (start && d < start) return false;
+          if (end && d > end) return false;
+          return true;
+        });
+
+        const dateMap = {};
+        filtered.forEach((record) => {
+          const d = new Date(record.createdAt || record.timestamp || "");
+          if (Number.isNaN(d.getTime())) return;
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (!dateMap[key]) {
+            dateMap[key] = {};
+            PEOPLE_NAMES.forEach((name) => {
+              dateMap[key][name] = 0;
+            });
+          }
+          const peopleMap = normalizePeople(record);
+          Object.entries(peopleMap).forEach(([name, count]) => {
+            dateMap[key][name] = (dateMap[key][name] || 0) + Number(count || 0);
+          });
+        });
+
+        const dates = Object.keys(dateMap).sort();
+        if (!dates.length) {
+          summaryTableWrap.innerHTML =
+            '<div class="empty">此區間沒有可統計資料</div>';
+          return;
+        }
+
+        const head = PEOPLE_NAMES.map(
+          (name) =>
+            `<th style="border:1px solid #d1d5db;padding:8px;text-align:center;background:#f8fafc;white-space:nowrap;">${escapeHtml(name)}</th>`,
+        ).join("");
+        const body = dates
+          .map((date) => {
+            const cols = PEOPLE_NAMES.map((name) => {
+              const value = dateMap[date][name] || 0;
+              const bg = value === 0 ? "#e5e7eb" : "#ffffff";
+              return `<td style="border:1px solid #d1d5db;padding:8px;text-align:center;background:${bg};">${value}</td>`;
+            }).join("");
+            return `<tr><td style="border:1px solid #d1d5db;padding:8px;white-space:nowrap;background:#f8fafc;">${date}</td>${cols}</tr>`;
+          })
+          .join("");
+
+        summaryTableWrap.innerHTML = `
+        <div class="subtext">統計日期數：${dates.length} 天，統計筆數：${filtered.length} 筆</div>
+        <div style="overflow:auto;">
+          <table style="width:100%;border-collapse:collapse;background:#fff;">
+            <thead>
+              <tr>
+                <th style="border:1px solid #d1d5db;padding:8px;text-align:center;background:#f8fafc;">日期</th>
+                ${head}
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      `;
+      }
+
+      function filterRecords() {
+        const keyword = searchInput.value.trim().toLowerCase();
+        if (!keyword) {
+          renderHistory(allRecords);
+          return;
+        }
+
+        const filtered = allRecords.filter((record) => {
+          const peopleMap = normalizePeople(record);
+          const text = [
+            record.projectName || "",
+            record.site || "",
+            ...Object.keys(peopleMap),
+            ...Object.entries(peopleMap).map(
+              ([name, count]) => `${name} ${count}`,
+            ),
+            formatDateTime(record.createdAt || record.timestamp || ""),
+          ]
+            .join(" ")
+            .toLowerCase();
+          return text.includes(keyword);
+        });
+
+        renderHistory(filtered);
+      }
+
+      async function fetchHistory() {
+        if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("請貼上")) {
+          historyCountEl.textContent = "請先設定 APPS_SCRIPT_URL";
+          historyListEl.innerHTML = '<div class="empty">尚未設定後端網址</div>';
+          return;
+        }
+
+        historyCountEl.textContent = "讀取中...";
+        historyListEl.innerHTML = "";
+
+        try {
+          const response = await fetch(`${APPS_SCRIPT_URL}?action=list`);
+          const result = await response.json();
+
+          if (!result.success) {
+            throw new Error(result.message || "讀取失敗");
+          }
+
+          allRecords = Array.isArray(result.data) ? result.data : [];
+          filterRecords();
+        } catch (error) {
+          historyCountEl.textContent = "讀取失敗";
+          historyListEl.innerHTML = `<div class="empty">${escapeHtml(error.message || "發生錯誤")}</div>`;
+        }
+      }
+
+      async function submitRecord(event) {
+        event.preventDefault();
+
+        const selectedSites = siteInputs
+          .filter((input) => input.checked)
+          .map((input) => input.value);
+        const projectName = projectNameInput.value.trim();
+        const site = selectedSites.join("、");
+        const peopleDetail = {};
+        peopleInputs.forEach((input) => {
+          const value = Number(input.value || 0);
+          if (value > 0) {
+            peopleDetail[input.dataset.name] = value;
+          }
+        });
+        const people = Object.keys(peopleDetail);
+
+        if (!projectName) {
+          setStatus("請輸入工程名稱", true);
+          return;
+        }
+
+        if (!site) {
+          setStatus("請輸入出工地點", true);
+          return;
+        }
+
+        if (!people.length) {
+          setStatus("請輸入至少一位出勤人員", true);
+          return;
+        }
+
+        if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("請貼上")) {
+          setStatus("請先設定 APPS_SCRIPT_URL", true);
+          return;
+        }
+
+        setStatus("送出中...");
+
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({
+              action: "add",
+              projectName,
+              site,
+              people,
+              peopleDetail,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            throw new Error(result.message || "送出失敗");
+          }
+
+          setStatus("登記成功");
+          form.reset();
+          siteInputs.forEach((input) => (input.checked = false));
+          peopleInputs.forEach((input) => (input.value = 0));
+          siteInputs.forEach((input) => (input.checked = false));
+          await function showTab(tab) {
+            const isForm = tab === "form";
+            formTab.style.display = isForm ? "" : "none";
+            historyTab.style.display = isForm ? "none" : "";
+            tabFormBtn.style.background = isForm ? "#dbeafe" : "#eef2ff";
+            tabHistoryBtn.style.background = isForm ? "#eef2ff" : "#dbeafe";
+          };
+
+          tabFormBtn.addEventListener("click", () => showTab("form"));
+          tabHistoryBtn.addEventListener("click", () => showTab("history"));
+
+          fetchHistory();
+          showTab("form");
+        } catch (error) {
+          setStatus(error.message || "發生錯誤", true);
+        }
+      }
+
+      function exportCsv() {
+        const rows = [
+          ["登記時間", "工程名稱", "出工地點", "出勤人員"],
+          ...allRecords.map((record) => {
+            const people = Array.isArray(record.people)
+              ? record.people
+              : splitPeople(record.people || "");
+            return [
+              formatDateTime(record.createdAt || record.timestamp || ""),
+              record.projectName || "",
+              record.site || "",
+              people.join("、"),
+            ];
+          }),
+        ];
+
+        const csv = rows
+          .map((row) =>
+            row
+              .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+              .join(","),
+          )
+          .join("\n");
+
+        const blob = new Blob(["\uFEFF" + csv], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `出工登記歷史_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      form.addEventListener("submit", submitRecord);
+      searchInput.addEventListener("input", filterRecords);
+      startDateInput.addEventListener("change", filterRecords);
+      endDateInput.addEventListener("change", filterRecords);
+      reloadBtn.addEventListener("click", fetchHistory);
+      exportBtn.addEventListener("click", exportCsv);
+
+      fetchHistory();
+    </script>
+  </body>
+</html>
